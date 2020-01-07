@@ -6,7 +6,7 @@ function check_network() {
 	#Check if network interface is connected to internet
 	ping -c2 archlinux.org  2>&1 > /dev/null
 	if [ $? -ne 0 ]; then
-		echo "[-] Network configuration not well set... \n[+]Trying to configure network... "
+		echo -e "[-] Network configuration not well set... \n[+]Trying to configure network... "
 	fi
 
 	Interface=$(ls /sys/class/net | grep '^e')
@@ -24,10 +24,12 @@ function preinstall() {
 	mount /dev/myvg/root /mnt
 	swapon /dev/myvg/swap
 	mkdir /mnt/boot/
-       	mkdir /mnt/efi/
+    mkdir /mnt/efi/
 	mount $esp /mnt/efi/
 
-	pacstrap /mnt base linux base-devel sudo wget curl lvm2 i3-wm i3lock i3blocks firefox caja lightdm vim 
+	pacstrap /mnt base linux base-devel sudo wget curl lvm2 i3-wm i3lock i3blocks firefox caja lightdm vim dhcpcd rofi dmenu mesa networkmanager xorg-server xorg-xrandr \
+	network-manager-applet lightdm-gtk-greeter fish keepassxc terminator fish git
+
 	genfstab -U /mnt >> /mnt/etc/fstab
 	echo "--------------------------------------------------------------------------"
 	cat "/mnt/etc/fstab"
@@ -35,6 +37,7 @@ function preinstall() {
 
 	cp /root/usb/arch-install-encrypted.sh /mnt
 	arch-chroot /mnt bash -c "./arch-install-encrypted.sh"
+	reboot	
 }
 
 function create_containner() {
