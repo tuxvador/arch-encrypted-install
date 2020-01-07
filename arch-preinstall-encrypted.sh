@@ -27,8 +27,8 @@ function preinstall() {
     mkdir /mnt/efi/
 	mount $esp /mnt/efi/
 
-	pacstrap /mnt base linux base-devel sudo wget curl lvm2 i3-wm i3lock i3blocks firefox caja lightdm vim dhcpcd rofi dmenu mesa networkmanager xorg-server xorg-xrandr \
-	network-manager-applet lightdm-gtk-greeter fish keepassxc terminator fish git linux-firmware
+	pacstrap /mnt base linux base-devel sudo wget curl lvm2 i3-wm i3lock i3status i3blocks firefox caja lightdm vim dhcpcd rofi dmenu mesa networkmanager xorg-server xorg-xrandr \
+	network-manager-applet lightdm-gtk-greeter fish keepassxc terminator fish git linux-firmware dhclient wifi-menu
 
 	genfstab -U /mnt >> /mnt/etc/fstab
 	echo "--------------------------------------------------------------------------"
