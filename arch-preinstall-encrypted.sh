@@ -1,6 +1,7 @@
 #!/bin/bash
 
 dev="/dev/"
+dual_boot=0
 
 function check_network() {
 	#Check if network interface is connected to internet
@@ -52,6 +53,16 @@ function create_containner() {
 	lsblk
 	read -p "Select ESP partition : " esp
 	esp="$dev$esp"
+
+	echo $dual_boot
+	if (( dual_boot=0 )); then
+		echo "dual boot = 0"
+	else
+		echo "dual boot = 1"
+	fi
+	read
+	exit -7
+
 	mkfs.fat -F32 $esp
 	mkfs.ext4 /dev/myvg/root
 	mkswap /dev/myvg/swap
@@ -67,6 +78,42 @@ function secure_erase() {
 	dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress
 	cryptsetup close to_be_wiped
 	create_containner $block_device
+
+}
+
+function check_dualboot() {
+
+	read -p "Do you want to make a dual boot install ?" -n 1 -r, echo
+	if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+		dual_boot = 1
+		lsblk
+		read -p "[+] Select device where to install the Arch-encrypted. Example: sda,nvmen1 : " block_device
+		block_device="$dev$block_device"
+		read -p "Are you sure : " -n 1 -r; echo
+		if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+			echo "You did not confirm on which device to install, exiting"
+			exit -6
+		else
+			echo "[+] Deleting all partitions on block device ..."
+			wipefs -a $block_device
+			echo -e "g\nn\n1\n\n\nt\n31\n\np" | sudo fdisk $block_device
+			read -p "Does this partition scheme suit you? : " -n 1 -r; echo
+			if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+				echo "You did not confirm. Exiting ..."
+				exit -7
+			else
+				echo "[+] partitionning device... "
+				echo -e "g\nn\n1\n\n\nt\n31\n\nw" | sudo fdisk $block_device
+				echo -e "\n"
+				lsblk
+				read -p "Select block device partition where to install arch : " block_device
+				block_device="$dev$block_device"
+				secure_erase $block_device
+			fi
+		fi
+	else
+		partition_disk
+	fi
 
 }
 
@@ -112,7 +159,7 @@ if test -d "$FILE_EFI"; then
 	echo "[+] Efi vars exist continuing install"
 	check_network
 	timedatectl set-ntp true
-	partition_disk
+	check_dualboot
 
 else
 	echo "[-] The efivars file was not found please disable secureboot and activate uefi boot, Stopping instll"
